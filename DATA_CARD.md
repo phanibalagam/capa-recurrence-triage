@@ -62,7 +62,7 @@ That interacts destructively with the derived outcome. Recurrence requires a
 strictly later receipt date, so reports sharing a date cannot recur against each
 other, and a same-day batch scores zero recurrence by construction. Treating each
 report as an independent observation reversed the direction of the headline
-association: unadjusted odds ratio 0.161 before, 1.874 after.
+association: unadjusted odds ratio 0.229 before, 1.874 after.
 
 `collapse_batch_filings()` in `src/build_corpus.py` therefore keeps **one record
 per (product code, manufacturer, primary problem, receipt date)** before anything
@@ -80,6 +80,7 @@ collapse and is not currently quantified.
 | Normalised | 4,528 |
 | Filing events after collapse | 635 |
 | Observable (full 365-day window) | 531 |
+| Observable at record level (`n_reports` expanded) | 4,192 |
 | Distinct groups | 370 |
 
 ### Fields taken directly from MAUDE
@@ -116,6 +117,16 @@ can be studied on public data at all. For each filing event, `1` if another even
 exists with the same *(product code, manufacturer, primary product problem)* and
 a receipt date in the interval `(D, D+365]`, where `D` is this event's receipt
 date. Derived after the collapse described above, never before it.
+
+**`n_reports`**: how many same-day reports the filing event stands for. It is 1
+for 401 of the 635 events and 2,413 for the largest, and it sums to the 4,528
+normalised reports. It exists so the superseded record-level analysis can be
+regenerated without the 172 MB raw download: repeating each event `n_reports`
+times reconstructs that table exactly, because reports collapsed into one event
+share the group key, the receipt date, the action class and the outcome.
+`run.py experiments --record-level` does this and writes
+`results/superseded_record_level.json`. Nothing else reads the field, and the
+record-level view is not a valid unit of analysis.
 
 **`n_prior_in_group`, `prior_365`**: the number of events in the group before
 this one, and the number in the preceding year. These are the covariates used for

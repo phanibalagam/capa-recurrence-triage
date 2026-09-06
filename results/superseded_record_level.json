@@ -1,0 +1,51 @@
+{
+  "WARNING": "superseded record-level analysis; every number here is one the paper withdraws. See METHODS.md section 6.3.",
+  "unit_of_analysis": "report (wrong)",
+  "n_records": 4192,
+  "n_in_contrast": 3946,
+  "unadjusted_odds_ratio": {
+    "mean": 0.2307,
+    "lo": 0.1747,
+    "hi": 0.2917,
+    "n": 800,
+    "point": 0.2289,
+    "resampled": "records, i.i.d. - this is the error"
+  },
+  "leaky_adjusted_odds_ratio": 0.4666,
+  "adjusted_odds_ratio": 0.8718,
+  "leave_one_group_out": [
+    {
+      "dropped_group": "FRN|CAREFUSION SD|Crack",
+      "n_dropped": 2413,
+      "leaky_adjusted": 0.7525,
+      "adjusted": 1.8905
+    },
+    {
+      "dropped_group": "LWS|BOSTON SCIENTIFIC CORPORATION|Premature Discharge of Battery",
+      "n_dropped": 278,
+      "leaky_adjusted": 0.4795,
+      "adjusted": 0.3783
+    },
+    {
+      "dropped_group": "LWP|BOSTON SCIENTIFIC CORPORATION|Premature Discharge of Battery",
+      "n_dropped": 123,
+      "leaky_adjusted": 0.9176,
+      "adjusted": 3.8724
+    },
+    {
+      "dropped_group": "BZD|RESPIRONICS, INC.|Degraded",
+      "n_dropped": 117,
+      "leaky_adjusted": 0.4493,
+      "adjusted": 0.7626
+    },
+    {
+      "dropped_group": "OZP|MEDTRONIC PUERTO RICO OPERATIONS CO.|Patient Device Interaction Problem",
+      "n_dropped": 78,
+      "leaky_adjusted": 0.4222,
+      "adjusted": 0.8675
+    }
+  ],
+  "max_logo_swing_leaky": 0.451,
+  "recurrence_roc_auc": 0.9533,
+  "narrative_accuracy": 0.7739
+}

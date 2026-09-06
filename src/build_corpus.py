@@ -142,22 +142,31 @@ def collapse_batch_filings(rows: list[dict]) -> list[dict]:
     scores zero recurrence by construction. Treating them as 2,413 independent
     observations does not just understate variance; it reverses the direction of
     the estimate. Before this collapse the unadjusted odds ratio for
-    engineering-type actions was 0.161 (they appeared far LESS likely to recur).
+    engineering-type actions was 0.229 (they appeared far LESS likely to recur).
     After it, on the same data, it is 1.874.
 
-    One record per (group, date) is kept. Everything downstream - the outcome,
-    the prior counts, the observability cut - is then derived from filing events.
+    One record per (group, date) is kept, carrying `n_reports`: how many reports
+    that filing event stands for. Everything downstream - the outcome, the prior
+    counts, the observability cut - is then derived from filing events.
+
+    `n_reports` is what makes the superseded record-level analysis reproducible
+    without the 172 MB raw download. Reports collapsed into one event share the
+    group key, the receipt date, the action class and, by construction, the
+    outcome, so replicating each event `n_reports` times reconstructs exactly the
+    record-level table the first analysis was fitted on. `run.py experiments
+    --record-level` does that, and reproduces the 0.229 this paper reports as the
+    error. See METHODS.md section 6.3.
     """
-    seen: set[tuple] = set()
-    kept: list[dict] = []
+    first: dict[tuple, dict] = {}
     for r in sorted(rows, key=lambda x: x["date_received"]):
         key = (r["product_code"], r["manufacturer"], r["product_problem"],
                r["date_received"])
-        if key in seen:
+        if key in first:
+            first[key]["n_reports"] += 1
             continue
-        seen.add(key)
-        kept.append(r)
-    return kept
+        r["n_reports"] = 1
+        first[key] = r
+    return list(first.values())
 
 
 def derive_recurrence(rows: list[dict], window_days: int = 365) -> list[dict]:

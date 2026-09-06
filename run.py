@@ -112,8 +112,11 @@ def cmd_evaluate(a):
 
 
 def cmd_experiments(a):
-    from src.experiments import leave_one_group_out, ablation, adjusted, repeated, stratified
-    if a.logo:
+    from src.experiments import (leave_one_group_out, ablation, adjusted, repeated,
+                                 stratified, record_level_replication)
+    if a.record_level:
+        record_level_replication(a.source, n_boot=max(a.n_boot, 800))
+    elif a.logo:
         leave_one_group_out(a.source)
     elif a.stratified:
         stratified(a.source, n_boot=a.n_boot)
@@ -183,6 +186,9 @@ def main():
     s.add_argument("--ablation", action="store_true")
     s.add_argument("--logo", action="store_true",
                    help="leave-one-group-out sensitivity of the adjusted odds ratio")
+    s.add_argument("--record-level", action="store_true",
+                   help="regenerate the superseded record-level estimates the "
+                        "paper reports as errors")
     s.add_argument("--fast", action="store_true",
                    help="skip the expensive per-bootstrap classifier refit")
     s.set_defaults(func=cmd_experiments)

@@ -218,7 +218,7 @@ def leave_one_group_out(source: str = "maude", top: int = 5,
     An estimate that moves sharply when one group is dropped is being carried by
     that group, not by the corpus. This is the check that would have caught the
     unit-of-analysis error before the cluster bootstrap did: on the record-level
-    corpus the adjusted OR moved from 1.050 to 3.426 when the largest group was
+    corpus the adjusted OR moved from 0.872 to 3.872 when a 123-record group was
     dropped. On filing events it barely moves.
     """
     df = load(source).copy()
@@ -546,6 +546,108 @@ def ablation(source: str = "maude", seeds: int = 5, verbose: bool = True) -> lis
     return rows
 
 
+
+def record_level_replication(source: str = "maude", n_boot: int = 800,
+                             verbose: bool = True) -> dict:
+    """
+    Regenerate the superseded record-level estimates the paper reports as errors.
+
+    This deliberately reproduces the WRONG analysis: one row per report rather
+    than per filing event, and an i.i.d. bootstrap over records rather than a
+    cluster bootstrap over groups. It exists so a reader can watch the numbers
+    move instead of taking the correction on trust, and so the four figures the
+    paper quotes as its own mistakes are artefacts rather than anecdotes.
+
+    Nothing here should be cited as a result. Every number it writes is one the
+    paper withdraws.
+    """
+    df = load(source, record_level=True).copy()
+    n_records = len(df)
+
+    # --- the unadjusted odds ratio that pointed the wrong way -----------------
+    two = df[df["action_class"].isin(["Engineering / design", "Communication"])].copy()
+    y = two["recurred_within_365d"].to_numpy()
+    is_eng = (two["action_class"] == "Engineering / design").to_numpy().astype(float)
+
+    def _or(rows, controls: list[str] | None = None) -> float:
+        yy, ee = y[rows], is_eng[rows]
+        if len(np.unique(yy)) < 2 or len(np.unique(ee)) < 2:
+            return float("nan")
+        X = ee.reshape(-1, 1)
+        if controls:
+            ctrl = np.log1p(two.iloc[rows][controls].to_numpy(dtype=float))
+            X = np.hstack([X, ctrl])
+        return float(np.exp(LogisticRegression(max_iter=2000)
+                            .fit(X, yy).coef_[0][0]))
+
+    all_rows = np.arange(len(two))
+    rng = np.random.default_rng(0)
+    # the original error: resample records independently, as if they were
+    iid = [_or(rng.integers(0, len(two), len(two))) for _ in range(n_boot)]
+    unadjusted = {**_percentile_ci(iid), "point": round(_or(all_rows), 4),
+                  "resampled": "records, i.i.d. - this is the error"}
+
+    # --- leave-one-group-out, on both adjustments -----------------------------
+    leaky_full = _or(all_rows, LEAKY_CONTROLS)
+    adj_full = _or(all_rows, ADJ_CONTROLS)
+    sizes = two.groupby("group_key").size().sort_values(ascending=False)
+    logo = []
+    for g in sizes.index[:5]:
+        rows = np.flatnonzero((two["group_key"] != g).to_numpy())
+        logo.append({"dropped_group": g, "n_dropped": int(sizes[g]),
+                     "leaky_adjusted": round(_or(rows, LEAKY_CONTROLS), 4),
+                     "adjusted": round(_or(rows, ADJ_CONTROLS), 4)})
+    swing = max(abs(r["leaky_adjusted"] - leaky_full) for r in logo)
+
+    # --- the two models that looked skilful ----------------------------------
+    tr, te = temporal_split(df)
+    auc = acc = None
+    try:
+        auc = round(RecurrenceModel().fit(tr).evaluate(te, tr).metrics["roc_auc"], 4)
+    except Exception:
+        pass
+    try:
+        acc = round(RootCauseClassifier().fit(tr).evaluate(te, tr)
+                    .metrics["accuracy"], 4)
+    except Exception:
+        pass
+
+    out = {
+        "WARNING": "superseded record-level analysis; every number here is one "
+                   "the paper withdraws. See METHODS.md section 6.3.",
+        "unit_of_analysis": "report (wrong)", "n_records": int(n_records),
+        "n_in_contrast": int(len(two)),
+        "unadjusted_odds_ratio": unadjusted,
+        "leaky_adjusted_odds_ratio": round(leaky_full, 4),
+        "adjusted_odds_ratio": round(adj_full, 4),
+        "leave_one_group_out": logo,
+        "max_logo_swing_leaky": round(swing, 4),
+        "recurrence_roc_auc": auc,
+        "narrative_accuracy": acc,
+    }
+    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / "superseded_record_level.json").write_text(json.dumps(out, indent=2))
+    if verbose:
+        print(f"\n{'=' * 78}")
+        print("  SUPERSEDED RECORD-LEVEL ANALYSIS - every number here is wrong")
+        print("=" * 78)
+        print(f"  records: {n_records}   in the two-arm contrast: {len(two)}")
+        u = out["unadjusted_odds_ratio"]
+        print(f"  unadjusted OR        {u['point']}  "
+              f"[{u.get('lo')}, {u.get('hi')}]   (i.i.d. record bootstrap)")
+        print(f"  leaky adjusted OR    {leaky_full:.4f}")
+        print(f"  adjusted OR          {adj_full:.4f}")
+        print("  leave-one-group-out (leaky | adjusted):")
+        for r in logo:
+            print(f"    drop {r['n_dropped']:>5} records -> "
+                  f"{r['leaky_adjusted']:.4f} | {r['adjusted']:.4f}")
+        print(f"  max swing on the leaky estimate: {swing:.4f}")
+        print(f"  recurrence ROC-AUC   {auc}")
+        print(f"  narrative accuracy   {acc}")
+        print("=" * 78)
+    return out
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -557,8 +659,12 @@ if __name__ == "__main__":
     ap.add_argument("--adjusted", action="store_true")
     ap.add_argument("--stratified", action="store_true")
     ap.add_argument("--ablation", action="store_true")
+    ap.add_argument("--record-level", action="store_true",
+                    help="regenerate the superseded record-level estimates")
     a = ap.parse_args()
-    if a.stratified:
+    if a.record_level:
+        record_level_replication(a.source, n_boot=max(a.n_boot, 800))
+    elif a.stratified:
         stratified(a.source, n_boot=max(a.n_boot, 200))
     elif a.adjusted:
         adjusted(a.source, n_boot=max(a.n_boot, 200))

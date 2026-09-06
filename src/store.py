@@ -52,7 +52,7 @@ SYNTH_ACTION_CLASS = {
 COMMON = ["record_id", "date", "cause_category", "action_type", "action_class",
           "unit", "area", "severity", "narrative", "recurred_within_365d",
           "n_prior_in_group", "prior_365", "group_size", "observable", "source",
-          "group_key"]
+          "group_key", "n_reports"]
 
 # group_size counts every member of a record's group, including reports that
 # arrive AFTER it, so it encodes the outcome. It is kept for description and
@@ -110,14 +110,48 @@ def _load_maude(path: str) -> pd.DataFrame:
         "n_prior_in_group": df["n_prior_in_group"].astype(int),
         "prior_365": df.get("prior_365", 0),
         "observable": df["observable"].astype(int),
+        # how many same-day reports this filing event stands for; 1 unless the
+        # event was a mass filing. 0 marks a corpus built before the field
+        # existed, so --record-level refuses rather than silently returning the
+        # collapsed table relabelled. Only --record-level reads it.
+        "n_reports": df["n_reports"].astype(int) if "n_reports" in df else 0,
     })
     out["source"] = "maude"
     out.attrs["is_fixture"] = bool(df.get("is_fixture", pd.Series([False])).any())
     return out
 
 
+def expand_to_reports(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Undo the mass-filing collapse: repeat each filing event `n_reports` times.
+
+    This reconstructs the record-level table the first version of this analysis
+    was fitted on, and it is exact rather than an approximation. Reports that
+    collapse into one filing event share the group key, the receipt date and the
+    action class, and they share the outcome too, because recurrence is defined
+    as a later report in the same group and same-day reports cannot be later than
+    one another. So the only thing the collapse discarded was the multiplicity,
+    and `n_reports` carries it.
+
+    This exists so the superseded estimates the paper reports as its own error
+    can be regenerated rather than quoted from a run log. It is not a valid unit
+    of analysis and nothing else in this package calls it.
+    """
+    if "n_reports" not in df.columns or (df["n_reports"] < 1).any():
+        raise SystemExit(
+            "This corpus predates the n_reports field, so the record-level view\n"
+            "cannot be reconstructed from it. Rebuild with\n"
+            "  python -m src.build_corpus --raw data/maude_raw.jsonl\n"
+            "which needs the raw download; see DATA_CARD.md.")
+    out = df.loc[df.index.repeat(df["n_reports"].astype(int))].copy()
+    out = out.reset_index(drop=True)
+    out.attrs.update(df.attrs)
+    out.attrs["record_level"] = True
+    return out
+
+
 def load(source: str = "synthetic", path: str | None = None,
-         observable_only: bool = True) -> pd.DataFrame:
+         observable_only: bool = True, record_level: bool = False) -> pd.DataFrame:
     """
     observable_only drops rows without a full 365-day follow-up window. Leave it
     on for anything that reports a recurrence figure; a corpus that includes
@@ -143,7 +177,10 @@ def load(source: str = "synthetic", path: str | None = None,
 
     df["searchable"] = (df["area"].astype(str) + " " + df["cause_category"].astype(str)
                         + " " + df["narrative"].astype(str))
-    return df.sort_values("date").reset_index(drop=True)
+    df = df.sort_values("date").reset_index(drop=True)
+    if record_level:
+        df = expand_to_reports(df)
+    return df
 
 
 def temporal_split(df: pd.DataFrame, frac_train: float = 0.75):
