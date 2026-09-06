@@ -1,0 +1,60 @@
+{
+  "experiment": "withdrawal_vs_in_service",
+  "results": {
+    "source": "maude",
+    "controls": [
+      "n_prior_in_group",
+      "prior_365"
+    ],
+    "contrasts": {
+      "all engineering vs communication": {
+        "n_exposed": 3628,
+        "n_comparison": 311,
+        "recurrence_exposed": 0.218,
+        "recurrence_comparison": 0.6399,
+        "adjusted_odds_ratio": {
+          "mean": 1.0754,
+          "lo": 0.8102,
+          "hi": 1.4071,
+          "n": 400,
+          "point": 1.0498
+        },
+        "protective": false,
+        "harmful": false,
+        "excludes_1": false
+      },
+      "withdrawal (recall) vs communication": {
+        "n_exposed": 3571,
+        "n_comparison": 311,
+        "recurrence_exposed": 0.2181,
+        "recurrence_comparison": 0.6399,
+        "adjusted_odds_ratio": {
+          "mean": 1.1618,
+          "lo": 0.8659,
+          "hi": 1.5544,
+          "n": 400,
+          "point": 1.1281
+        },
+        "protective": false,
+        "harmful": false,
+        "excludes_1": false
+      },
+      "in service (repair/replace/modify) vs communication": {
+        "n_exposed": 57,
+        "n_comparison": 311,
+        "recurrence_exposed": 0.2105,
+        "recurrence_comparison": 0.6399,
+        "adjusted_odds_ratio": {
+          "mean": 2.0076,
+          "lo": 0.7418,
+          "hi": 4.7631,
+          "n": 400,
+          "point": 1.686
+        },
+        "protective": false,
+        "harmful": false,
+        "excludes_1": false
+      }
+    }
+  }
+}

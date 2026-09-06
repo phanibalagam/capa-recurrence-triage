@@ -1,0 +1,38 @@
+{
+  "experiment": "repeated_evaluation",
+  "results": {
+    "source": "maude",
+    "uncertainty_from": "bootstrap resamples of the real corpus",
+    "n_records": 4192,
+    "cause_accuracy": {
+      "mean": 0.7649,
+      "ci95_halfwidth": 0.0043,
+      "sd": 0.017,
+      "n": 60
+    },
+    "recurrence_roc_auc": {
+      "mean": 0.9751,
+      "ci95_halfwidth": 0.0012,
+      "sd": 0.0046,
+      "n": 60
+    },
+    "worst_action_class_pct": {
+      "mean": 64.0081,
+      "lo": 57.4038,
+      "hi": 70.8785,
+      "n": 60
+    },
+    "best_action_class_pct": {
+      "mean": 21.8483,
+      "lo": 20.5713,
+      "hi": 22.8886,
+      "n": 60
+    },
+    "recurrence_ratio": {
+      "mean": 2.9321,
+      "lo": 2.5833,
+      "hi": 3.2683,
+      "n": 60
+    }
+  }
+}

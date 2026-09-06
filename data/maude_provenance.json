@@ -1,0 +1,19 @@
+{
+  "source": "openFDA device/event (MAUDE)",
+  "endpoint": "https://api.fda.gov/device/event.json",
+  "licence": "CC0 1.0 Universal (public domain dedication)",
+  "licence_url": "https://open.fda.gov/license/",
+  "query": "_exists_:remedial_action AND _exists_:product_problems AND _exists_:device.device_report_product_code",
+  "years": [
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "n_records": 28000,
+  "retrieved_utc": "2026-09-05T16:49:08Z",
+  "note": "GMDN terminology fields are not requested or stored."
+}

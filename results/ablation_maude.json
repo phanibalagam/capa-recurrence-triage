@@ -1,0 +1,106 @@
+{
+  "experiment": "recurrence_feature_ablation",
+  "source": "maude",
+  "rows": [
+    {
+      "configuration": "all features",
+      "n_features": 5,
+      "roc_auc": {
+        "mean": 0.9835,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "- action_type",
+      "n_features": 4,
+      "roc_auc": {
+        "mean": 0.98,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "- cause_category",
+      "n_features": 4,
+      "roc_auc": {
+        "mean": 0.9358,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "- severity",
+      "n_features": 4,
+      "roc_auc": {
+        "mean": 0.984,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "- unit",
+      "n_features": 4,
+      "roc_auc": {
+        "mean": 0.9819,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "- area",
+      "n_features": 4,
+      "roc_auc": {
+        "mean": 0.9814,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "action_type only",
+      "n_features": 1,
+      "roc_auc": {
+        "mean": 0.536,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "+ prior counts (adjusted)",
+      "n_features": 7,
+      "roc_auc": {
+        "mean": 0.9848,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "prior_365 only",
+      "n_features": 1,
+      "roc_auc": {
+        "mean": 0.5879,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    },
+    {
+      "configuration": "group_size only  [LEAKY]",
+      "n_features": 1,
+      "roc_auc": {
+        "mean": 0.9929,
+        "ci95_halfwidth": 0.0,
+        "sd": 0.0,
+        "n": 10
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: >-
+  Recurrence Risk of Remedial Actions in Post-Market Device Reports:
+  A Derived-Outcome Study on openFDA MAUDE
+abstract: >-
+  A triage system for manufacturing deviations that surfaces the recurrence
+  rate historically associated with a proposed corrective action, at the
+  moment the action is being written.
+type: software
+authors:
+  - family-names: Balagam
+    given-names: Phani Kumar
+    orcid: "https://orcid.org/0009-0007-6762-399X"
+repository-code: "https://github.com/phanibalagam/capa-recurrence-triage"
+license: MIT
+date-released: "2026-09-05"
+version: "1.0.0"
+keywords:
+  - pharmaceutical quality
+  - openFDA
+  - post-market surveillance
+  - confounding
+  - CAPA effectiveness
+  - deviation management
+  - root cause classification
+  - decision support

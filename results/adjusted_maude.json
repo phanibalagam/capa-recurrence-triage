@@ -1,0 +1,39 @@
+{
+  "experiment": "adjusted_association",
+  "results": {
+    "source": "maude",
+    "n": 3939,
+    "contrast": "Engineering / design vs Communication",
+    "outcome": "recurrence within 365 days",
+    "controls": [
+      "n_prior_in_group",
+      "prior_365"
+    ],
+    "unadjusted_odds_ratio": {
+      "mean": 0.1619,
+      "lo": 0.1246,
+      "hi": 0.204,
+      "n": 400,
+      "point": 0.1611
+    },
+    "adjusted_odds_ratio": {
+      "mean": 1.0754,
+      "lo": 0.8102,
+      "hi": 1.4071,
+      "n": 400,
+      "point": 1.0498
+    },
+    "leaky_controls": [
+      "group_size",
+      "n_prior_in_group"
+    ],
+    "leaky_adjusted_odds_ratio": {
+      "mean": 0.2603,
+      "lo": 0.184,
+      "hi": 0.3532,
+      "n": 400,
+      "point": 0.2575,
+      "warning": "INVALID. group_size counts reports that arrive after the index record, so this conditions on the outcome. Reported only as the contrast that identified the error."
+    }
+  }
+}
