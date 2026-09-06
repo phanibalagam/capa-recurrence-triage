@@ -95,9 +95,32 @@ def _frames(source: str, seeds: int, n_boot: int):
         return out, "regenerated corpora"
     base = load("maude")
     rng = np.random.default_rng(0)
-    return ([base.sample(frac=1.0, replace=True, random_state=int(rng.integers(1e9)))
+    # Clustered on group_key, like every other interval in this module. See
+    # _cluster_indices: the outcome is a property of a group, so resampling
+    # events independently understates the variance.
+    return ([base.iloc[_cluster_indices(base, rng)]
              .sort_values("date").reset_index(drop=True) for _ in range(n_boot)],
-            "bootstrap resamples of the real corpus")
+            "cluster bootstrap over groups")
+
+
+def _cluster_indices(df, rng):
+    """
+    One bootstrap resample, clustered on group_key.
+
+    The outcome is "did another report in this group follow within a year", so it
+    is a property of the group, not of the record. Records within a group are
+    therefore strongly dependent, and resampling events i.i.d. treats dependent
+    observations as independent ones. That understates the variance of every
+    estimate here.
+
+    Resampling whole groups with replacement respects the dependence. Intervals
+    get wider, which is the honest answer, not a worse one.
+    """
+    groups = df["group_key"].to_numpy()
+    uniq = np.unique(groups)
+    idx_by_group = {g: np.flatnonzero(groups == g) for g in uniq}
+    picked = rng.choice(uniq, size=len(uniq), replace=True)
+    return np.concatenate([idx_by_group[g] for g in picked])
 
 
 # --------------------------------------------------------------------------
@@ -187,6 +210,57 @@ WITHDRAWAL_ACTIONS = ["Recall"]
 IN_SERVICE_ACTIONS = ["Repair", "Replace", "Modification/Adjustment"]
 
 
+def leave_one_group_out(source: str = "maude", top: int = 5,
+                        verbose: bool = True) -> dict:
+    """
+    Refit the adjusted odds ratio with each of the largest groups removed.
+
+    An estimate that moves sharply when one group is dropped is being carried by
+    that group, not by the corpus. This is the check that would have caught the
+    unit-of-analysis error before the cluster bootstrap did: on the record-level
+    corpus the adjusted OR moved from 1.050 to 3.426 when the largest group was
+    dropped. On filing events it barely moves.
+    """
+    df = load(source).copy()
+    df = df[df["action_class"].isin(["Engineering / design", "Communication"])].copy()
+
+    def _or(d):
+        y = d["recurred_within_365d"].to_numpy()
+        e = (d["action_class"] == "Engineering / design").to_numpy().astype(float)
+        if len(np.unique(y)) < 2 or len(np.unique(e)) < 2:
+            return float("nan")
+        X = np.hstack([e.reshape(-1, 1),
+                       np.log1p(d[ADJ_CONTROLS].to_numpy(dtype=float))])
+        return float(np.exp(LogisticRegression(max_iter=2000).fit(X, y).coef_[0][0]))
+
+    full = _or(df)
+    rows = []
+    for g in df["group_key"].value_counts().head(top).index:
+        d = df[df["group_key"] != g]
+        rows.append({"group_dropped": str(g), "n_dropped": int((df["group_key"] == g).sum()),
+                     "n_remaining": int(len(d)), "adjusted_odds_ratio": round(_or(d), 4)})
+    swing = max(abs(r["adjusted_odds_ratio"] - full) for r in rows) if rows else 0.0
+    out = {"source": source, "n": int(len(df)), "full_adjusted_odds_ratio": round(full, 4),
+           "largest_swing": round(swing, 4), "rows": rows}
+
+    if verbose:
+        print(f"\n{'=' * 80}")
+        print(f"  LEAVE-ONE-GROUP-OUT  ·  source={source}  ·  n={out['n']}")
+        print("=" * 80)
+        print(f"  adjusted OR, full corpus            {full:.3f}")
+        for r in rows:
+            print(f"    without {r['group_dropped'][:44]:<46} {r['adjusted_odds_ratio']:.3f}")
+        print("-" * 80)
+        print(f"  largest swing {swing:.3f}. An estimate carried by one group is not")
+        print("  an estimate of anything the corpus supports.")
+        print("=" * 80)
+
+    RESULTS.mkdir(exist_ok=True)
+    (RESULTS / f"leave_one_group_out_{source}.json").write_text(json.dumps(
+        {"experiment": "leave_one_group_out", "results": out}, indent=2))
+    return out
+
+
 def adjusted(source: str = "maude", n_boot: int = 400, verbose: bool = True) -> dict:
     """
     Association between action class and recurrence, unadjusted and adjusted
@@ -194,6 +268,9 @@ def adjusted(source: str = "maude", n_boot: int = 400, verbose: bool = True) -> 
 
     Reported as an odds ratio for "Engineering / design" against
     "Communication", the contrast the project is actually about.
+
+    Uncertainty is a cluster bootstrap over groups, not over records. See
+    _cluster_indices for why.
     """
     df = load(source).copy()
     df = df[df["action_class"].isin(["Engineering / design", "Communication"])].copy()
@@ -228,7 +305,7 @@ def adjusted(source: str = "maude", n_boot: int = 400, verbose: bool = True) -> 
     rng = np.random.default_rng(0)
     boots = {k: [] for k in ARMS}
     for _ in range(n_boot):
-        idx = rng.integers(0, len(df), len(df))
+        idx = _cluster_indices(df, rng)          # clustered on group_key
         for k, c in ARMS.items():
             boots[k].append(_or(idx, c))
 
@@ -301,7 +378,7 @@ def _adjusted_or(df: pd.DataFrame, exposed_mask: np.ndarray,
 
     point = fit(np.arange(len(df)))
     rng = np.random.default_rng(0)
-    boots = [fit(rng.integers(0, len(df), len(df))) for _ in range(n_boot)]
+    boots = [fit(_cluster_indices(df, rng)) for _ in range(n_boot)]
     return {**_percentile_ci(boots),
             "point": None if not np.isfinite(point) else round(point, 4)}
 

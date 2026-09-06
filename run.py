@@ -112,8 +112,10 @@ def cmd_evaluate(a):
 
 
 def cmd_experiments(a):
-    from src.experiments import ablation, adjusted, repeated, stratified
-    if a.stratified:
+    from src.experiments import leave_one_group_out, ablation, adjusted, repeated, stratified
+    if a.logo:
+        leave_one_group_out(a.source)
+    elif a.stratified:
         stratified(a.source, n_boot=a.n_boot)
     elif a.adjusted:
         adjusted(a.source, n_boot=a.n_boot)
@@ -179,6 +181,8 @@ def main():
     s.add_argument("--stratified", action="store_true",
                    help="test the device-withdrawal alternative explanation")
     s.add_argument("--ablation", action="store_true")
+    s.add_argument("--logo", action="store_true",
+                   help="leave-one-group-out sensitivity of the adjusted odds ratio")
     s.add_argument("--fast", action="store_true",
                    help="skip the expensive per-bootstrap classifier refit")
     s.set_defaults(func=cmd_experiments)

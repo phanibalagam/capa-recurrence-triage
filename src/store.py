@@ -46,9 +46,13 @@ SYNTH_ACTION_CLASS = {
     "No action - not required": "Other",
 }
 
+# group_key identifies the cluster within which the outcome is defined. The
+# outcome (did a comparable report follow?) is a property of the group, not of the
+# record, so records are NOT independent and any resampling must be by group.
 COMMON = ["record_id", "date", "cause_category", "action_type", "action_class",
           "unit", "area", "severity", "narrative", "recurred_within_365d",
-          "n_prior_in_group", "prior_365", "group_size", "observable", "source"]
+          "n_prior_in_group", "prior_365", "group_size", "observable", "source",
+          "group_key"]
 
 # group_size counts every member of a record's group, including reports that
 # arrive AFTER it, so it encodes the outcome. It is kept for description and
@@ -131,6 +135,11 @@ def load(source: str = "synthetic", path: str | None = None,
         n0 = len(df)
         df = df[df["observable"] == 1].copy()
         df.attrs["dropped_censored"] = n0 - len(df)
+
+    # The cluster the outcome is defined within: (product code, manufacturer,
+    # primary problem) for MAUDE, which store as (area, unit, cause_category).
+    df["group_key"] = (df["area"].astype(str) + "|" + df["unit"].astype(str)
+                       + "|" + df["cause_category"].astype(str))
 
     df["searchable"] = (df["area"].astype(str) + " " + df["cause_category"].astype(str)
                         + " " + df["narrative"].astype(str))

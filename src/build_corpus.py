@@ -125,10 +125,47 @@ def normalise(rec: dict) -> dict | None:
     }
 
 
+def collapse_batch_filings(rows: list[dict]) -> list[dict]:
+    """
+    Collapse each (group, receipt date) to a single filing event.
+
+    THE UNIT OF ANALYSIS IS A FILING EVENT, NOT A REPORT.
+
+    MAUDE contains mass filings: a manufacturer submits thousands of reports for
+    one problem on one device on a single day. In the corpus this was written
+    against, one such filing accounted for 2,413 of the 4,528 normalised reports, all on 2022-01-01, all one product code, manufacturer and
+    problem.
+
+    That breaks the outcome. Recurrence is "another report in this group with a
+    receipt date strictly after this one, within a year", so reports sharing a
+    date cannot recur against each other, and a batch of 2,413 same-day reports
+    scores zero recurrence by construction. Treating them as 2,413 independent
+    observations does not just understate variance; it reverses the direction of
+    the estimate. Before this collapse the unadjusted odds ratio for
+    engineering-type actions was 0.161 (they appeared far LESS likely to recur).
+    After it, on the same data, it is 1.874.
+
+    One record per (group, date) is kept. Everything downstream - the outcome,
+    the prior counts, the observability cut - is then derived from filing events.
+    """
+    seen: set[tuple] = set()
+    kept: list[dict] = []
+    for r in sorted(rows, key=lambda x: x["date_received"]):
+        key = (r["product_code"], r["manufacturer"], r["product_problem"],
+               r["date_received"])
+        if key in seen:
+            continue
+        seen.add(key)
+        kept.append(r)
+    return kept
+
+
 def derive_recurrence(rows: list[dict], window_days: int = 365) -> list[dict]:
     """
     Adds: recurred_within_365d, days_to_next, n_prior_in_group, prior_365,
     group_size, observable.
+
+    Operates on filing events; see collapse_batch_filings.
 
     Only `observable` rows have a full follow-up window. Only `n_prior_in_group`
     and `prior_365` are safe to use as model inputs - `group_size` looks into the
@@ -220,6 +257,12 @@ def main() -> None:
     rows = [n for n in (normalise(r) for r in raw) if n]
     if not rows:
         raise SystemExit("no usable records: none had narrative + problem + action")
+
+    n_reports = len(rows)
+    rows = collapse_batch_filings(rows)
+    print(f"  {n_reports} reports -> {len(rows)} filing events "
+          f"({n_reports - len(rows)} same-day duplicates within a group collapsed)")
+
     rows = derive_recurrence(rows, a.window)
 
     out = Path(a.out)

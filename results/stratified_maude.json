@@ -8,48 +8,48 @@
     ],
     "contrasts": {
       "all engineering vs communication": {
-        "n_exposed": 3628,
-        "n_comparison": 311,
-        "recurrence_exposed": 0.218,
-        "recurrence_comparison": 0.6399,
+        "n_exposed": 356,
+        "n_comparison": 39,
+        "recurrence_exposed": 0.3146,
+        "recurrence_comparison": 0.1795,
         "adjusted_odds_ratio": {
-          "mean": 1.0754,
-          "lo": 0.8102,
-          "hi": 1.4071,
-          "n": 400,
-          "point": 1.0498
+          "mean": 2.1101,
+          "lo": 0.8221,
+          "hi": 5.1659,
+          "n": 800,
+          "point": 1.7691
         },
         "protective": false,
         "harmful": false,
         "excludes_1": false
       },
       "withdrawal (recall) vs communication": {
-        "n_exposed": 3571,
-        "n_comparison": 311,
-        "recurrence_exposed": 0.2181,
-        "recurrence_comparison": 0.6399,
+        "n_exposed": 320,
+        "n_comparison": 39,
+        "recurrence_exposed": 0.3344,
+        "recurrence_comparison": 0.1795,
         "adjusted_odds_ratio": {
-          "mean": 1.1618,
-          "lo": 0.8659,
-          "hi": 1.5544,
-          "n": 400,
-          "point": 1.1281
+          "mean": 2.3028,
+          "lo": 0.88,
+          "hi": 5.4992,
+          "n": 800,
+          "point": 1.8621
         },
         "protective": false,
         "harmful": false,
         "excludes_1": false
       },
       "in service (repair/replace/modify) vs communication": {
-        "n_exposed": 57,
-        "n_comparison": 311,
-        "recurrence_exposed": 0.2105,
-        "recurrence_comparison": 0.6399,
+        "n_exposed": 36,
+        "n_comparison": 39,
+        "recurrence_exposed": 0.1389,
+        "recurrence_comparison": 0.1795,
         "adjusted_odds_ratio": {
-          "mean": 2.0076,
-          "lo": 0.7418,
-          "hi": 4.7631,
-          "n": 400,
-          "point": 1.686
+          "mean": 1.3763,
+          "lo": 0.48,
+          "hi": 3.0976,
+          "n": 800,
+          "point": 1.2278
         },
         "protective": false,
         "harmful": false,

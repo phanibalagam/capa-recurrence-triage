@@ -71,7 +71,7 @@ reporting volume must be adjusted for. It must also be measured using only the
 past. `group_size` counts every member of a group including reports that arrive
 after the index record, so it encodes the outcome; the covariates used are
 `n_prior_in_group` (reports before this one) and `prior_365` (reports in the same
-group in the preceding year). §6.3 reports what happened when this was got wrong.
+group in the preceding year). §6.5 reports what happened when this was got wrong.
 
 ## 4. Why the unadjusted table is not the result
 
@@ -96,8 +96,8 @@ make.
 
 **Model.** Logistic regression of recurrence on an engineering-action indicator,
 fitted twice: unadjusted, and adjusted for `log1p(n_prior_in_group)` and
-`log1p(prior_365)`. Reported as an odds ratio with a percentile bootstrap 95%
-interval over 400 resamples.
+`log1p(prior_365)`. Reported as an odds ratio with a percentile **cluster**
+bootstrap over groups, 95% interval over 800 resamples.
 
 **Stratification.** Because a recall removes devices from service, engineering
 actions are additionally split into withdrawal (Recall) and in-service (Repair,
@@ -114,7 +114,7 @@ the first 75% by receipt date trains, the remainder tests.
 **Ablation.** The recurrence model is refitted with each feature group removed.
 `group_size` is retained in the ablation table, labelled `[LEAKY]`, because the
 contrast between it and the valid covariates is what identified the error in
-§6.3.
+§6.5.
 
 ## 6. Results
 
@@ -122,58 +122,78 @@ Corpus retrieved 2026-09-05 from openFDA `device/event`, receipt years 2018–20
 4,000 reports per year (28,000 raw). Query and timestamp in
 `data/maude_provenance.json`.
 
+**The unit of analysis is a filing event, not a report.** MAUDE contains mass
+filings: thousands of reports for one problem on one device, all on one day. In
+this corpus a single such filing accounts for 2,413 reports, all dated
+2022-01-01, all one product code, manufacturer and problem, all engineering-class
+actions. Recurrence requires a strictly later receipt date, so same-day reports
+cannot recur against each other and that batch scores zero recurrence by
+construction. Each (group, date) is collapsed to one filing event before anything
+is derived. §6.3 reports what happened before this was done.
+
 | Stage | N |
 |---|---|
 | Raw reports fetched | 28,000 |
 | Normalised (narrative + coded problem + remedial action) | 4,528 (16.2%) |
-| Full 365-day follow-up (the analysis set) | 4,192 (92.6%) |
+| Collapsed to filing events | 635 (3,893 same-day duplicates removed) |
+| Full 365-day follow-up (the analysis set) | 531 (84%) |
 | Distinct groups | 370 |
 | Overall recurrence | 25.6% |
 
-### 6.1 The unadjusted table looks like a finding
+All intervals below are **cluster bootstraps over groups**, not over events: the
+370 groups of the analysis set, or the 255 of the Engineering-vs-Communication
+contrast where that is the subject. The outcome is a property of a group, so events within one are dependent
+and a record-level bootstrap understates every interval.
 
-| Action class | n | Recurrence |
+### 6.1 The unadjusted table
+
+| Action class | Events | Recurrence |
 |---|---|---|
-| Communication | 311 | 64.0% |
-| Other | 242 | 33.5% |
-| Engineering / design | 3,628 | 21.8% |
-| Surveillance | 11 | 9.1% |
+| Engineering / design | 356 | 31.5% |
+| Communication | 39 | 17.9% |
+| Other | 129 | 13.2% |
+| Surveillance | 7 | 0.0% |
 
-Communication-type actions are followed by recurrence **2.93×** as often as
-engineering-type actions (bootstrap 95% CI [2.58, 3.27], 60 resamples). That is
-the direction the project hypothesised, with a tight interval.
+Across classes with at least 30 events the ratio of highest to lowest recurrence
+rate is **2.39** as observed; resampled, its bootstrap mean is 3.33 with a 95%
+interval of [1.70, 11.57]. That statistic re-selects the extreme classes inside
+each resample, so it is biased upward and describes spread rather than an effect.
 
 ### 6.2 It does not survive adjustment
 
-Engineering/design versus Communication, n = 3,939, 400 bootstrap resamples:
+Engineering/design versus Communication, n = 395 events in 255 groups, 800
+cluster-bootstrap resamples:
 
 | Estimate | Odds ratio | 95% CI |
 |---|---|---|
-| Unadjusted | 0.161 | [0.125, 0.204] |
-| Adjusted for `group_size` + `n_prior_in_group` **(invalid, see §6.3)** | 0.258 | [0.184, 0.353] |
-| **Adjusted for backward-looking reporting volume** | **1.050** | **[0.810, 1.407]** |
+| Unadjusted | 1.874 | [0.853, 5.379] |
+| Adjusted for `group_size` + `n_prior_in_group` **(invalid, see §6.5)** | 1.019 | [0.575, 2.352] |
+| **Adjusted for backward-looking reporting volume** | **1.769** | **[0.822, 5.166]** |
 
-The correct estimate is centred on 1 with an interval straddling it symmetrically.
-**There is no association between action class and recurrence in this corpus once
-reporting volume is properly controlled.** The apparent 2.93× was confounding.
+The adjusted interval includes 1 across its whole width. **There is no detectable
+association between action class and recurrence in this corpus.**
 
-### 6.3 The intermediate estimate was an artefact of the adjustment itself
+The interval is not tight. With 39 communication-class events, this corpus could
+not have detected anything short of a large effect. The honest statement is that
+no association is detectable here, not that none exists.
 
-The middle row is reported because its history matters. The first adjustment
-controlled for `group_size` alongside `n_prior_in_group`. `group_size` is the
-number of reports sharing a record's group, and it is the leaky term. That
-count includes reports arriving *after* the record, so it encodes the outcome:
-"does a later report exist" is most of what `group_size` measures. Conditioning on
-it does not remove confounding; it conditions on the answer.
+### 6.3 Getting the unit wrong reversed the sign
 
-The ablation is what exposed this. `group_size` alone predicts recurrence at
-**ROC-AUC 0.993**, against 0.536 for the action type and 0.588 for a correct
-backward-looking count. No categorical covariate predicts an outcome that well.
+Before mass filings were collapsed, the same pipeline on the same download
+reported an unadjusted odds ratio of **0.161** with a record-level interval of
+[0.125, 0.204]: engineering-class actions appeared to recur far *less*, with an
+interval excluding 1 by a wide margin. It was the most publishable-looking number
+in the project.
 
-Replacing it with `n_prior_in_group` and `prior_365`, both computed only from
-records preceding the index date, moves the estimate from 0.258 to 1.050. A
-leaky adjustment produced a comfortable, publishable-looking number; the correct
-one produces nothing.
+It was an artefact of counting one filing event 2,413 times, all on one side of
+the contrast and all at zero recurrence by construction. Collapsing to filing
+events moves the unadjusted estimate from 0.161 to 1.874. The direction reverses.
+
+Two checks would have caught it and neither was in the harness at the time. A
+cluster bootstrap over groups gave intervals so wide they were plainly degenerate
+([0.03, 16.4] unadjusted). And a leave-one-group-out check moved the adjusted
+estimate from 1.050 to 3.426 when the largest group was dropped, which no stable
+estimate does. After collapsing, the same check moves it by less than 0.06.
 
 ### 6.4 Stratification cannot rescue it
 
@@ -181,58 +201,86 @@ A recall removes devices from service, so fewer later reports could mean the
 devices are gone rather than the action worked. Splitting engineering by whether
 the device stays in the field, each contrast against Communication and adjusted:
 
-| Contrast | n | Recurrence | Adjusted OR | 95% CI | Excludes 1 |
+| Contrast | Events | Recurrence | Adjusted OR | 95% CI | Excludes 1 |
 |---|---|---|---|---|---|
-| All engineering | 3,628 | 21.8% | 1.050 | [0.810, 1.407] | no |
-| Withdrawal (recall) | 3,571 | 21.8% | 1.128 | [0.866, 1.554] | no |
-| In service (repair/replace/modify) | 57 | 21.1% | 1.686 | [0.742, 4.763] | no |
+| All engineering | 356 | 31.5% | 1.769 | [0.822, 5.166] | no |
+| Withdrawal (recall) | 320 | 33.4% | 1.862 | [0.880, 5.499] | no |
+| In service (repair/replace/modify) | 36 | 13.9% | 1.228 | [0.480, 3.098] | no |
 
-None excludes 1. Two further observations bear on any future attempt:
-**98.4% of engineering-class records are recalls** (3,571 of 3,628), so the class
-is effectively a recall indicator; and the in-service arm has n = 57, far too few
-to estimate anything, with an interval spanning 0.742 to 4.763.
+None excludes 1. The in-service arm has 36 events, far too few to estimate
+anything.
 
-### 6.5 The recurrence model's accuracy is circular, not skilful
+### 6.5 The intermediate estimate was an artefact of the adjustment itself
 
-The recurrence model reaches ROC-AUC 0.975 (bootstrap 95% CI ±0.001). That number
-should not be read as predictive skill.
+The middle row of §6.2 is reported because its history matters. The first
+adjustment controlled for `group_size` alongside `n_prior_in_group`. `group_size`
+counts every event sharing a record's group, including events arriving *after*
+it, so it encodes the outcome. Conditioning on it does not remove confounding; it
+conditions on the answer.
 
-Recurrence is defined *within* groups keyed on (product code, manufacturer,
-problem), and three of the model's five features are exactly those three fields.
-The model therefore identifies the group, and whether a group contains later
-reports is a property of the group. High AUC follows by construction.
+The ablation exposed it. `group_size` alone predicts recurrence at **ROC-AUC
+0.807**, against 0.516 for the action type and 0.509 for a correct
+backward-looking count.
 
-The ablation shows the same thing from the other side: `action_type` alone reaches
-0.536, barely above chance. Nothing in the model is learning about remedial
-actions.
+Replacing it moves the estimate from 1.019 to 1.769. Note the direction: on this
+corpus the leak pulls *toward* the null, and on the earlier record-level corpus it
+pulled away from it. A leak has no consistent sign, which is what makes it hard to
+notice.
 
-A note on the reported uncertainty: the across-seed standard deviation is exactly
-0.000 because the estimator is deterministic given the data. Seed variation is
-uninformative for this model, and the bootstrap intervals are the only meaningful
-ones. The cause classifier, predicting the coded product problem from the
-narrative on a temporal split, reaches 0.765 accuracy (bootstrap 95% half-width
-0.004, 60 resamples). That is a supporting number, not a result: it says the
-narratives carry enough signal to recover the coded problem, which is what makes
-the group key meaningful, and it says nothing about remedial actions.
+### 6.6 The recurrence model has no skill at all
 
-### 6.6 What the study concludes
+The recurrence model reaches **ROC-AUC 0.488** (cluster bootstrap ±0.021), below
+chance. The ablation agrees: every configuration sits between 0.44 and 0.55
+except the leaky one.
 
-On 4,192 openFDA device reports from 2018–2024, **the class of remedial action
-recorded shows no association with whether a comparable report recurs within a
-year, once reporting volume is controlled using backward-looking counts.** The
-large unadjusted association is confounded, and the confounding is severe enough
-to reverse the sign of the log-odds estimate.
+On the record-level corpus the same model scored 0.975, and that number was
+explained here as circular rather than skilful, because three of its five
+features are the group key that defines the outcome. That explanation was correct
+as far as it went and understated the problem. Once duplicate filings are
+collapsed the apparent skill does not shrink toward a modest honest value; it
+disappears. The model was recognising repeated copies of one filing event.
+
+The narrative classifier moves the same way, from 0.765 accuracy to 0.338. Both
+were measuring memorisation of duplicated text.
+
+### 6.7 What the study concludes
+
+On 531 openFDA filing events from 2018–2024, **the class of remedial action
+recorded shows no detectable association with whether a comparable problem is
+reported again within a year.** The finding this project was built to demonstrate
+is not present in the data, and the comparison arm is too small to have found
+anything but a large effect.
+
+Three corrections were needed to reach that sentence: the analysis unit, which
+reversed the sign; the adjustment covariate, which leaked the outcome; and the
+resampling unit, which understated every interval.
 
 This is a null result and it is reported as one.
 
 ## 7. Limitations
 
-The most consequential limitation is structural and was found only after the
-analysis was built: the outcome is defined within groups whose keys are also model
-features, so the recurrence model cannot separate action effects from group
-identity. A design that avoids this would need an outcome defined independently of
-the covariates, for example a within-group before/after comparison around the
-action date, which this corpus can support and this study did not attempt.
+**The comparison arm is small.** 39 communication-class filing events, against
+356 engineering-class. Every interval here is wide for that reason, and the study
+has no power to detect a moderate effect. Absence of a detectable association is
+not evidence of absence.
+
+**The sampling design is not random.** `fetch_maude.py` pages from `skip=0` in
+openFDA's default order, 4,000 per year, so the corpus is the first 4,000 matching
+reports per year rather than a sample of them. That is how a single 2,413-report
+mass filing came to dominate the raw download. Collapsing to filing events removes
+its numerical dominance but not the underlying selection, which remains
+unquantified.
+
+The outcome is defined within groups whose keys are also model features, so the
+recurrence model cannot separate action effects from group identity. A design that
+avoids this would need an outcome defined independently of the covariates, for
+example a within-group before/after comparison around the action date, which this
+corpus can support and this study did not attempt.
+
+**Odds ratios are fitted with scikit-learn's default L2 penalty.** On data of this
+shape the shrinkage is under 0.001 in log-odds and does not move any estimate
+reported here, but the fits are penalised rather than maximum-likelihood and that
+is stated rather than left implicit.
 
 Only 16.2% of fetched reports normalised, almost all dropped for absent or short
 narrative text. Reports carrying narratives may differ systematically from those
@@ -241,7 +289,9 @@ that do not, and that selection is unquantified.
 MAUDE is passive, voluntary surveillance; FDA states it cannot be used to
 evaluate event rates or compare devices. There is no denominator, so recurrence
 here is *reports following reports*, not risk per device in service. Duplicate
-and supplemental reports exist and are not deduplicated beyond report number.
+and supplemental reports exist; same-day duplicates within a group are collapsed
+to one filing event, but supplemental reports filed on later dates are not
+identified as such and will be counted as recurrence.
 `remedial_action` records what a manufacturer reported, not what was done or how
 well. Adjustment covers reporting volume only; severity, device class and
 manufacturer capability plausibly confound and are not adjusted for, so the

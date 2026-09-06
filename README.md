@@ -67,57 +67,76 @@ python run.py capa-risk --source synthetic
 
 ## What it finds: nothing, and that is the result
 
-On 4,192 real openFDA device reports (2018-2024), the unadjusted table looks like
-a finding:
+**First, what one row means.** MAUDE contains mass filings: thousands of reports
+for one problem on one device, all on one day. In this corpus a single such
+filing is 2,413 of the 4,528 normalised reports, all dated 2022-01-01, all one
+product code, manufacturer and problem, all engineering-class actions.
 
-| Action class | n | Recurrence |
+Recurrence requires a strictly later receipt date, so same-day reports cannot
+recur against each other and that batch scores zero recurrence by construction.
+The pipeline therefore collapses each (group, date) to **one filing event**: 4,528
+reports become 635 events, of which 531 have a full 365-day window.
+
+| Action class | Events | Recurrence |
 |---|---|---|
-| Communication | 311 | 64.0% |
-| Other | 242 | 33.5% |
-| Engineering / design | 3,628 | 21.8% |
-| Surveillance | 11 | 9.1% |
+| Engineering / design | 356 | 31.5% |
+| Communication | 39 | 17.9% |
+| Other | 129 | 13.2% |
+| Surveillance | 7 | 0.0% |
 
-Communication-type actions followed by recurrence **2.93x** as often as
-engineering-type ones, 95% CI [2.58, 3.27]. The direction is the one the project
-hypothesised and the interval is tight, and it is an exact analogue of
-"retraining versus engineering control".
-
-It does not survive adjustment.
+Every interval below is a **cluster bootstrap over groups**, not over events. The outcome is a property of a group, so events within one are dependent.
 
 | Estimate | Odds ratio | 95% CI |
 |---|---|---|
-| Unadjusted | 0.161 | [0.125, 0.204] |
-| Adjusted for `group_size` **(invalid)** | 0.258 | [0.184, 0.353] |
-| **Adjusted, backward-looking counts** | **1.050** | **[0.810, 1.407]** |
+| Unadjusted | 1.874 | [0.853, 5.379] |
+| Adjusted for `group_size` **(invalid)** | 1.019 | [0.575, 2.352] |
+| **Adjusted, backward-looking counts** | **1.769** | **[0.822, 5.166]** |
 
-**There is no association once reporting volume is properly controlled.**
+**There is no detectable association.** The interval is also not tight: with 39
+communication-class events this corpus could not have found anything short of a
+large effect. No association is detectable here; that is not the same as none
+existing.
 
-### The middle row is the interesting one
+### Getting the unit wrong reversed the sign
 
-The first adjustment used `group_size`, which counts every report in a record's
-group *including later ones*. It encodes the outcome. Conditioning on it does not
-remove confounding; it conditions on the answer, and it produced a comfortable
-0.258 that would have been published.
+Before mass filings were collapsed, this pipeline reported an unadjusted odds
+ratio of **0.161**, interval [0.125, 0.204]: engineering actions appearing to
+recur far *less*, with an interval excluding 1 by a wide margin. It was the most
+publishable-looking number in the project, and it was an artefact of counting one
+filing event 2,413 times.
+
+Two checks would have caught it and neither was in the harness. A cluster
+bootstrap over groups gave [0.03, 16.4], plainly degenerate. A leave-one-group-out
+check moved the adjusted estimate from 1.050 to 3.426 when the largest group was
+dropped. After collapsing, that check moves it by under 0.06.
+
+### The middle row is still interesting
+
+The first adjustment used `group_size`, which counts every event in a record's
+group *including later ones*. It encodes the outcome, so conditioning on it
+conditions on the answer.
 
 The ablation caught it: `group_size` alone predicts recurrence at **ROC-AUC
-0.993**, against 0.536 for the action type. No categorical covariate does that.
-The implausibility was the tell, not any suspicion about the adjustment.
+0.807**, against 0.516 for the action type. Note the direction: here the leak
+pulls *toward* the null (1.019 against a correct 1.769), and on the earlier
+record-level corpus it pulled away from it. A leak has no consistent sign.
 
-Doing the right analysis incorrectly is more dangerous than skipping it, because
-the output carries the signature of rigour.
+### The model has no skill at all
 
-### Two more things the checks found
+The recurrence model scores **ROC-AUC 0.488**, below chance, and the ablation
+agrees: everything sits between 0.44 and 0.55 except the leaky covariate.
 
-**Stratification cannot rescue it.** A recall removes devices from service, so
-fewer later reports may mean the devices are gone. Splitting engineering by
-whether the device stays in the field: none of the three contrasts excludes 1, and
-**98.4% of engineering records are recalls** (3,571 of 3,628), so the class is
-effectively a recall indicator. The in-service arm is n=57.
+On the record-level corpus it scored 0.975, which was described here as circular
+rather than skilful. That was true and understated it. Once duplicates are
+collapsed the apparent skill does not shrink to a modest honest value, it
+disappears. The model was recognising repeated copies of one filing event. The
+narrative classifier moves the same way, 0.765 to 0.338.
 
-**The recurrence model's 0.975 AUC is circular.** Recurrence is defined within
-groups keyed on (product code, manufacturer, problem), and three of five model
-features are those fields. The model identifies the group; whether a group has
-later reports is a property of the group. `action_type` alone scores 0.536.
+### Stratification cannot rescue it
+
+Splitting engineering by whether the device stays in service: all engineering
+1.769 [0.822, 5.166], recall 1.862 [0.880, 5.499], in-service 1.228
+[0.480, 3.098]. None excludes 1, and the in-service arm has 36 events.
 
 Full numbers in `METHODS.md` and `results/`.
 

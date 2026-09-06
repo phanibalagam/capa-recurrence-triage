@@ -1,0 +1,41 @@
+{
+  "experiment": "leave_one_group_out",
+  "results": {
+    "source": "maude",
+    "n": 395,
+    "full_adjusted_odds_ratio": 1.7691,
+    "largest_swing": 0.0476,
+    "rows": [
+      {
+        "group_dropped": "OZO|MEDTRONIC PUERTO RICO OPERATIONS CO.|No Display/Image",
+        "n_dropped": 9,
+        "n_remaining": 386,
+        "adjusted_odds_ratio": 1.7215
+      },
+      {
+        "group_dropped": "OYC|MEDTRONIC PUERTO RICO OPERATIONS CO.|No Display/Image",
+        "n_dropped": 8,
+        "n_remaining": 387,
+        "adjusted_odds_ratio": 1.7519
+      },
+      {
+        "group_dropped": "OZP|MEDTRONIC PUERTO RICO OPERATIONS CO.|No Display/Image",
+        "n_dropped": 7,
+        "n_remaining": 388,
+        "adjusted_odds_ratio": 1.7391
+      },
+      {
+        "group_dropped": "OYC|MEDTRONIC PUERTO RICO OPERATIONS CO.|Patient Device Interaction Problem",
+        "n_dropped": 6,
+        "n_remaining": 389,
+        "adjusted_odds_ratio": 1.7456
+      },
+      {
+        "group_dropped": "OYC|MEDTRONIC PUERTO RICO OPERATIONS CO.|Device Alarm System",
+        "n_dropped": 5,
+        "n_remaining": 390,
+        "adjusted_odds_ratio": 1.7532
+      }
+    ]
+  }
+}
