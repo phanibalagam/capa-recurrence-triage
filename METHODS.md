@@ -190,7 +190,7 @@ the device stays in the field, each contrast against Communication and adjusted:
 None excludes 1. Two further observations bear on any future attempt:
 **98.4% of engineering-class records are recalls** (3,571 of 3,628), so the class
 is effectively a recall indicator; and the in-service arm has n = 57, far too few
-to estimate anything, with an interval spanning 0.69 to 4.76.
+to estimate anything, with an interval spanning 0.742 to 4.763.
 
 ### 6.5 The recurrence model's accuracy is circular, not skilful
 
