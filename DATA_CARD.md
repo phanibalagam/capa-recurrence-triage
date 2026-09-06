@@ -15,6 +15,20 @@ number means, so it is stated on every output.
 
 ## `maude`: real data
 
+### What ships with this repository
+
+`data/deviations_maude.jsonl`: the 635-event analysis corpus, redistributed here.
+openFDA is CC0, so there is no licence obstacle, and the paper's null result
+cannot be checked without it. openFDA is also a live database, so a later fetch
+will not return the same records: this file is the one every reported figure
+comes from.
+
+`data/maude_provenance.json`: the endpoint, exact query, year range, record count
+and retrieval timestamp.
+
+Not shipped: the 172 MB raw download (`run.py fetch` regenerates it) and the
+synthetic teaching corpus (`run.py setup --source synthetic`).
+
 ### Provenance
 
 US FDA Manufacturer and User Facility Device Experience database, retrieved
@@ -36,6 +50,37 @@ least one coded product problem, at least one recorded remedial action, and a
 narrative of at least 40 characters assembled from `mdr_text` entries of type
 *Description of Event or Problem* or *Additional Manufacturer Narrative*.
 Everything else is dropped, not imputed.
+
+### The unit of analysis is a filing event, not a report
+
+MAUDE contains mass filings: a manufacturer submits thousands of reports for one
+problem on one device on a single day. In this corpus one such filing is **2,413
+of the 4,528 normalised reports**, all dated 2022-01-01, all one product code,
+manufacturer and problem, all engineering-class actions.
+
+That interacts destructively with the derived outcome. Recurrence requires a
+strictly later receipt date, so reports sharing a date cannot recur against each
+other, and a same-day batch scores zero recurrence by construction. Treating each
+report as an independent observation reversed the direction of the headline
+association: unadjusted odds ratio 0.161 before, 1.874 after.
+
+`collapse_batch_filings()` in `src/build_corpus.py` therefore keeps **one record
+per (product code, manufacturer, primary problem, receipt date)** before anything
+is derived. 4,528 reports become 635 filing events, of which 531 have a full
+365-day follow-up window.
+
+The retained record is whichever same-day report sorts first. Where a batch spans
+more than one `remedial_action`, the surviving event's `action_class` is
+therefore arbitrary among the collapsed set. That is a limitation of this
+collapse and is not currently quantified.
+
+| Stage | N |
+|---|---|
+| Raw reports fetched | 28,000 |
+| Normalised | 4,528 |
+| Filing events after collapse | 635 |
+| Observable (full 365-day window) | 531 |
+| Distinct groups | 370 |
 
 ### Fields taken directly from MAUDE
 
@@ -67,15 +112,25 @@ classification; raw `remedial_action` is retained so it can be regrouped.
 | Other | Other, None |
 
 **`recurred_within_365d`**: the outcome the project is about, and the reason it
-can be studied on public data at all. For each report, `1` if another report
+can be studied on public data at all. For each filing event, `1` if another event
 exists with the same *(product code, manufacturer, primary product problem)* and
-a receipt date in the interval `(D, D+365]`, where `D` is this report's receipt
-date.
+a receipt date in the interval `(D, D+365]`, where `D` is this event's receipt
+date. Derived after the collapse described above, never before it.
 
-**`group_size`, `n_prior_in_group`**: the number of reports sharing the group
-key, and how many precede this one. Carried because they confound the outcome:
-a device that is reported more is mechanically more likely to be reported again,
-whatever action was taken.
+**`n_prior_in_group`, `prior_365`**: the number of events in the group before
+this one, and the number in the preceding year. These are the covariates used for
+adjustment, and both count only the past.
+
+**`group_size`**: the number of events sharing the group key, including those
+arriving *after* this one. It therefore encodes the outcome and is **never a
+model input**. It is carried, labelled `[LEAKY]`, only because the contrast
+between it and the valid covariates is what identified an earlier adjustment
+error: on its own it predicts recurrence at ROC-AUC 0.807.
+
+**`group_key`**: the group the outcome is defined within, as
+`product_code|manufacturer|product_problem`. Events within a group are dependent,
+so every confidence interval reported from this corpus is a cluster bootstrap
+over groups rather than over events.
 
 **`observable`**: `1` when the report has a full 365-day follow-up window inside
 the corpus, i.e. `date_received <= max(date_received) - 365`. Reports near the end
@@ -94,7 +149,9 @@ claimed.
 2. **No denominator.** Units sold or in service are unknown, so recurrence here
    is *reports following reports*, not risk per device.
 3. **Duplicates and supplements.** The same event can generate multiple reports.
-   No deduplication beyond `report_number` is performed.
+   Same-day reports within a group are collapsed to one filing event, as above.
+   Supplemental reports filed on *later* dates are not identified as such, and
+   will be counted as recurrence.
 4. **`remedial_action` is manufacturer-reported** and describes what was recorded,
    not necessarily what was done or how well.
 5. **Association, not causation.** Action type is chosen partly in response to
