@@ -10,17 +10,17 @@
       "prior_365"
     ],
     "unadjusted_odds_ratio": {
-      "mean": 2.2044,
-      "lo": 0.8527,
+      "mean": 2.2088,
+      "lo": 0.8367,
       "hi": 5.3791,
-      "n": 800,
+      "n": 2000,
       "point": 1.8738
     },
     "adjusted_odds_ratio": {
-      "mean": 2.1101,
-      "lo": 0.8221,
-      "hi": 5.1659,
-      "n": 800,
+      "mean": 2.1169,
+      "lo": 0.8301,
+      "hi": 5.2089,
+      "n": 2000,
       "point": 1.7691
     },
     "leaky_controls": [
@@ -28,10 +28,10 @@
       "n_prior_in_group"
     ],
     "leaky_adjusted_odds_ratio": {
-      "mean": 1.1365,
-      "lo": 0.575,
+      "mean": 1.1408,
+      "lo": 0.5713,
       "hi": 2.3524,
-      "n": 800,
+      "n": 2000,
       "point": 1.0194,
       "warning": "INVALID. group_size counts reports that arrive after the index record, so this conditions on the outcome. Reported only as the contrast that identified the error."
     }

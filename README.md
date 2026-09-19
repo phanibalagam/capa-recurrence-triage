@@ -88,9 +88,9 @@ Every interval below is a **cluster bootstrap over groups**, not over events. Th
 
 | Estimate | Odds ratio | 95% CI |
 |---|---|---|
-| Unadjusted | 1.874 | [0.853, 5.379] |
-| Adjusted for `group_size` **(invalid)** | 1.019 | [0.575, 2.352] |
-| **Adjusted, backward-looking counts** | **1.769** | **[0.822, 5.166]** |
+| Unadjusted | 1.874 | [0.837, 5.379] |
+| Adjusted for `group_size` **(invalid)** | 1.019 | [0.571, 2.352] |
+| **Adjusted, backward-looking counts** | **1.769** | **[0.830, 5.209]** |
 
 **There is no detectable association.** The interval is also not tight: with 39
 communication-class events this corpus could not have found anything short of a
@@ -100,7 +100,7 @@ existing.
 ### Getting the unit wrong reversed the sign
 
 Before mass filings were collapsed, this pipeline reported an unadjusted odds
-ratio of **0.229**, interval [0.175, 0.292]: engineering actions appearing to
+ratio of **0.229**, interval [0.176, 0.292]: engineering actions appearing to
 recur far *less*, with an interval excluding 1 by a wide margin. It was the most
 publishable-looking number in the project, and it was an artefact of counting one
 filing event 2,413 times.
@@ -137,8 +137,8 @@ narrative classifier moves the same way, 0.765 to 0.338.
 ### Stratification cannot rescue it
 
 Splitting engineering by whether the device stays in service: all engineering
-1.769 [0.822, 5.166], recall 1.862 [0.880, 5.499], in-service 1.228
-[0.480, 3.098]. None excludes 1, and the in-service arm has 36 events.
+1.769 [0.830, 5.209], recall 1.862 [0.839, 5.773], in-service 1.228
+[0.473, 3.049]. None excludes 1, and the in-service arm has 36 events.
 
 Full numbers in `METHODS.md` and `results/`.
 

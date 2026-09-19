@@ -4,10 +4,10 @@
   "n_records": 4192,
   "n_in_contrast": 3946,
   "unadjusted_odds_ratio": {
-    "mean": 0.2307,
-    "lo": 0.1747,
+    "mean": 0.2309,
+    "lo": 0.176,
     "hi": 0.2917,
-    "n": 800,
+    "n": 2000,
     "point": 0.2289,
     "resampled": "records, i.i.d. - this is the error"
   },

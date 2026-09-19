@@ -97,7 +97,7 @@ make.
 **Model.** Logistic regression of recurrence on an engineering-action indicator,
 fitted twice: unadjusted, and adjusted for `log1p(n_prior_in_group)` and
 `log1p(prior_365)`. Reported as an odds ratio with a percentile **cluster**
-bootstrap over groups, 95% interval over 800 resamples.
+bootstrap over groups, 95% interval over 2,000 resamples.
 
 **Stratification.** Because a recall removes devices from service, engineering
 actions are additionally split into withdrawal (Recall) and in-service (Repair,
@@ -161,14 +161,14 @@ each resample, so it is biased upward and describes spread rather than an effect
 
 ### 6.2 It does not survive adjustment
 
-Engineering/design versus Communication, n = 395 events in 255 groups, 800
+Engineering/design versus Communication, n = 395 events in 255 groups, 2,000
 cluster-bootstrap resamples:
 
 | Estimate | Odds ratio | 95% CI |
 |---|---|---|
-| Unadjusted | 1.874 | [0.853, 5.379] |
-| Adjusted for `group_size` + `n_prior_in_group` **(invalid, see §6.5)** | 1.019 | [0.575, 2.352] |
-| **Adjusted for backward-looking reporting volume** | **1.769** | **[0.822, 5.166]** |
+| Unadjusted | 1.874 | [0.837, 5.379] |
+| Adjusted for `group_size` + `n_prior_in_group` **(invalid, see §6.5)** | 1.019 | [0.571, 2.352] |
+| **Adjusted for backward-looking reporting volume** | **1.769** | **[0.830, 5.209]** |
 
 The adjusted interval includes 1 across its whole width. **There is no detectable
 association between action class and recurrence in this corpus.**
@@ -181,7 +181,7 @@ no association is detectable here, not that none exists.
 
 Before mass filings were collapsed, the same pipeline on the same download
 reported an unadjusted odds ratio of **0.229** with a record-level interval of
-[0.175, 0.292]: engineering-class actions appeared to recur far *less*, with an
+[0.176, 0.292]: engineering-class actions appeared to recur far *less*, with an
 interval excluding 1 by a wide margin. It was the most publishable-looking number
 in the project.
 
@@ -222,9 +222,9 @@ the device stays in the field, each contrast against Communication and adjusted:
 
 | Contrast | Events | Recurrence | Adjusted OR | 95% CI | Excludes 1 |
 |---|---|---|---|---|---|
-| All engineering | 356 | 31.5% | 1.769 | [0.822, 5.166] | no |
-| Withdrawal (recall) | 320 | 33.4% | 1.862 | [0.880, 5.499] | no |
-| In service (repair/replace/modify) | 36 | 13.9% | 1.228 | [0.480, 3.098] | no |
+| All engineering | 356 | 31.5% | 1.769 | [0.830, 5.209] | no |
+| Withdrawal (recall) | 320 | 33.4% | 1.862 | [0.839, 5.773] | no |
+| In service (repair/replace/modify) | 36 | 13.9% | 1.228 | [0.473, 3.049] | no |
 
 None excludes 1. The in-service arm has 36 events, far too few to estimate
 anything.

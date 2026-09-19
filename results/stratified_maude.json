@@ -13,10 +13,10 @@
         "recurrence_exposed": 0.3146,
         "recurrence_comparison": 0.1795,
         "adjusted_odds_ratio": {
-          "mean": 2.1101,
-          "lo": 0.8221,
-          "hi": 5.1659,
-          "n": 800,
+          "mean": 2.1169,
+          "lo": 0.8301,
+          "hi": 5.2089,
+          "n": 2000,
           "point": 1.7691
         },
         "protective": false,
@@ -29,10 +29,10 @@
         "recurrence_exposed": 0.3344,
         "recurrence_comparison": 0.1795,
         "adjusted_odds_ratio": {
-          "mean": 2.3028,
-          "lo": 0.88,
-          "hi": 5.4992,
-          "n": 800,
+          "mean": 2.3013,
+          "lo": 0.8392,
+          "hi": 5.7733,
+          "n": 2000,
           "point": 1.8621
         },
         "protective": false,
@@ -45,10 +45,10 @@
         "recurrence_exposed": 0.1389,
         "recurrence_comparison": 0.1795,
         "adjusted_odds_ratio": {
-          "mean": 1.3763,
-          "lo": 0.48,
-          "hi": 3.0976,
-          "n": 800,
+          "mean": 1.3588,
+          "lo": 0.4728,
+          "hi": 3.0492,
+          "n": 1999,
           "point": 1.2278
         },
         "protective": false,

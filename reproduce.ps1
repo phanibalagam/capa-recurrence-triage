@@ -23,8 +23,8 @@ Write-Host ""; Write-Host ">>> run.py evaluate --source maude"
 python run.py evaluate --source maude
 Write-Host ""; Write-Host ">>> run.py experiments --source maude --n-boot 200"
 python run.py experiments --source maude --n-boot 200
-Write-Host ""; Write-Host ">>> run.py experiments --source maude --adjusted --n-boot 400"
-python run.py experiments --source maude --adjusted --n-boot 400
+Write-Host ""; Write-Host ">>> run.py experiments --source maude --adjusted --n-boot 2000"
+python run.py experiments --source maude --adjusted --n-boot 2000
 Write-Host ""; Write-Host ">>> run.py experiments --source maude --ablation"
 python run.py experiments --source maude --ablation
 Write-Host ""; Write-Host "Done. Reported numbers are in results/."

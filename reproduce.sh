@@ -43,13 +43,13 @@ echo
 echo ">>> run.py experiments --source maude --n-boot 200"
 python3 run.py experiments --source maude --n-boot 200
 echo
-echo ">>> run.py experiments --source maude --adjusted --n-boot 800"
-python3 run.py experiments --source maude --adjusted --n-boot 800
+echo ">>> run.py experiments --source maude --adjusted --n-boot 2000"
+python3 run.py experiments --source maude --adjusted --n-boot 2000
 echo
-echo ">>> run.py experiments --source maude --stratified --n-boot 800"
-python3 run.py experiments --source maude --stratified --n-boot 800
+echo ">>> run.py experiments --source maude --stratified --n-boot 2000"
+python3 run.py experiments --source maude --stratified --n-boot 2000
 echo
-echo ">>> run.py experiments --source maude --ablation"
+echo ">>> run.py experiments --source maude --logo"
 python3 run.py experiments --source maude --logo
 echo
 echo ">>> run.py experiments --source maude --ablation"

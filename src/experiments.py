@@ -261,7 +261,7 @@ def leave_one_group_out(source: str = "maude", top: int = 5,
     return out
 
 
-def adjusted(source: str = "maude", n_boot: int = 400, verbose: bool = True) -> dict:
+def adjusted(source: str = "maude", n_boot: int = 2000, verbose: bool = True) -> dict:
     """
     Association between action class and recurrence, unadjusted and adjusted
     for how much the group gets reported.
@@ -362,7 +362,7 @@ def adjusted(source: str = "maude", n_boot: int = 400, verbose: bool = True) -> 
 # --------------------------------------------------------------------------
 
 def _adjusted_or(df: pd.DataFrame, exposed_mask: np.ndarray,
-                 n_boot: int = 400) -> dict:
+                 n_boot: int = 2000) -> dict:
     """Adjusted odds ratio for `exposed_mask` vs the rest of `df`."""
     y = df["recurred_within_365d"].to_numpy()
     e = exposed_mask.astype(float)
@@ -383,7 +383,7 @@ def _adjusted_or(df: pd.DataFrame, exposed_mask: np.ndarray,
             "point": None if not np.isfinite(point) else round(point, 4)}
 
 
-def stratified(source: str = "maude", n_boot: int = 400,
+def stratified(source: str = "maude", n_boot: int = 2000,
                verbose: bool = True) -> dict:
     """
     Does the association survive when the device stays in service?
@@ -547,7 +547,7 @@ def ablation(source: str = "maude", seeds: int = 5, verbose: bool = True) -> lis
 
 
 
-def record_level_replication(source: str = "maude", n_boot: int = 800,
+def record_level_replication(source: str = "maude", n_boot: int = 2000,
                              verbose: bool = True) -> dict:
     """
     Regenerate the superseded record-level estimates the paper reports as errors.
@@ -663,11 +663,11 @@ if __name__ == "__main__":
                     help="regenerate the superseded record-level estimates")
     a = ap.parse_args()
     if a.record_level:
-        record_level_replication(a.source, n_boot=max(a.n_boot, 800))
+        record_level_replication(a.source, n_boot=max(a.n_boot, 2000))
     elif a.stratified:
-        stratified(a.source, n_boot=max(a.n_boot, 200))
+        stratified(a.source, n_boot=max(a.n_boot, 2000))
     elif a.adjusted:
-        adjusted(a.source, n_boot=max(a.n_boot, 200))
+        adjusted(a.source, n_boot=max(a.n_boot, 2000))
     elif a.ablation:
         ablation(a.source, seeds=max(a.seeds // 2, 3))
     else:
